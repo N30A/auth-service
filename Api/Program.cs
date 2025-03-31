@@ -1,3 +1,4 @@
+using Api.Endpoints;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,11 +18,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.MapGet("", () =>
-    {
-       
-    })
-    .WithName("");
+app.MapAuthEndpoints();
 
 app.Run();
