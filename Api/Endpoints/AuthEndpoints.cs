@@ -1,4 +1,4 @@
-using Api.Dtos.Auth;
+using Core.Dtos.Auth;
 
 namespace Api.Endpoints;
 
