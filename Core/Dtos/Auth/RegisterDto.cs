@@ -1,4 +1,4 @@
-namespace Api.Dtos.Auth;
+namespace Core.Dtos.Auth;
 
 public class RegisterDto
 {

@@ -1,4 +1,4 @@
-namespace Api.Dtos.Users;
+namespace Core.Dtos.User;
 
 public class ChangePasswordDto
 {
