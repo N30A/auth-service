@@ -4,7 +4,7 @@ namespace Api.Endpoints;
 
 public static class UsersEndpoints
 {
-    public static void MapUserEndpoints(this IEndpointRouteBuilder builder)
+    public static void MapUsersEndpoints(this IEndpointRouteBuilder builder)
     {
         builder.MapGet("/users", GetAll);
         builder.MapGet("/users/{userId:int}", Get);
