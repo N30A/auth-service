@@ -17,20 +17,19 @@ public class UserRepository : IUserRepository
         _logger = logger;
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<IEnumerable<UserDto>> GetAllAsync()
     {
         const string query = """
             SELECT
                 UserId, Username, Email, PasswordHash,
                 CreatedAt, UpdatedAt, DeletedAt
             FROM [User]
-            WHERE DeletedAt IS NULL;
         """;
         
         try
         {   
             _logger.LogDebug("Fetching all users from database.");
-            return await _connection.QueryAsync<User>(query);
+            return await _connection.QueryAsync<UserDto>(query);
         }
         catch (Exception ex)
         {   
@@ -39,14 +38,14 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public async Task<User?> GetByIdAsync(int userId)
+    public async Task<UserDto?> GetByIdAsync(int userId)
     {
         const string query = """
              SELECT
                  UserId, Username, Email, PasswordHash,
                  CreatedAt, UpdatedAt, DeletedAt
              FROM [User]
-             WHERE DeletedAt IS NULL AND UserId = @UserId;
+             WHERE UserId = @UserId;
          """;
         
         try
@@ -61,14 +60,14 @@ public class UserRepository : IUserRepository
         }
     }
     
-    public async Task<User?> GetByEmailAsync(string email)
+    public async Task<UserDto?> GetByEmailAsync(string email)
     {
         const string query = """
              SELECT
                  UserId, Username, Email, PasswordHash,
                  CreatedAt, UpdatedAt, DeletedAt
              FROM [User]
-             WHERE DeletedAt IS NULL AND Email = @Email;
+             WHERE Email = @Email;
          """;
         
         try
@@ -83,7 +82,7 @@ public class UserRepository : IUserRepository
         }
     }
     
-    public async Task<int?> AddAsync(User user)
+    public async Task<int?> AddAsync(UserDto userDto)
     {
         const string query = """
              INSERT INTO [User](Username, Email, PasswordHash)
@@ -94,7 +93,7 @@ public class UserRepository : IUserRepository
         try
         {
             _logger.LogDebug("Creating new user from database.");
-            return await _connection.ExecuteScalarAsync<int?>(query, user);
+            return await _connection.ExecuteScalarAsync<int?>(query, userDto);
         }
         catch (Exception ex)
         {   

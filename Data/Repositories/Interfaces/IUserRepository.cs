@@ -4,10 +4,10 @@ using Models;
 
 public interface IUserRepository
 {
-    Task<IEnumerable<User>> GetAllAsync();
-    Task<User?> GetByIdAsync(int userId);
-    Task<User?> GetByEmailAsync(string email);
-    Task<int?> AddAsync(User user);
+    Task<IEnumerable<UserDto>> GetAllAsync();
+    Task<UserDto?> GetByIdAsync(int userId);
+    Task<UserDto?> GetByEmailAsync(string email);
+    Task<int?> AddAsync(UserDto userDto);
     Task<bool> SoftDeleteAsync(int userId);
     
     Task<bool> ChangeUsernameAsync(int userId, string newUsername);
