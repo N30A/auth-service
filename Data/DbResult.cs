@@ -2,12 +2,12 @@ namespace Data;
 
 public class DbResult<T>
 {
-    public bool Status { get; private set; }
+    public bool IsSuccess { get; private set; }
     public T? Data { get; private set; }
 
-    private DbResult(bool status, T? data)
+    private DbResult(bool isSuccess, T? data)
     {
-        Status = status;
+        IsSuccess = isSuccess;
         Data = data;
     }
     

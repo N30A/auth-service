@@ -4,14 +4,14 @@ namespace Core;
 
 public class Result<T>
 {
-    public bool Status { get; private set; }
+    public bool IsSuccess { get; private set; }
     public string Message { get; private set; }
     public T? Data { get; private set; }
     public HttpStatusCode StatusCode { get; private set; }
 
-    private Result(bool status, string message, T? data, HttpStatusCode statusCode)
+    private Result(bool isSuccess, string message, T? data, HttpStatusCode statusCode)
     {
-        Status = status;
+        IsSuccess = isSuccess;
         Message = message;
         Data = data;
         StatusCode = statusCode;
