@@ -17,28 +17,29 @@ public class UserRepository : IUserRepository
         _logger = logger;
     }
 
-    public async Task<IEnumerable<UserDto>> GetAllAsync()
+    public async Task<DbResult<IEnumerable<UserModel>>> GetAllAsync()
     {
         const string query = """
             SELECT
                 UserId, Username, Email, PasswordHash,
                 CreatedAt, UpdatedAt, DeletedAt
-            FROM [User]
+            FROM [User];
         """;
         
         try
         {   
             _logger.LogDebug("Fetching all users from database.");
-            return await _connection.QueryAsync<UserDto>(query);
+            var users = await _connection.QueryAsync<UserModel>(query);
+            return DbResult<IEnumerable<UserModel>>.Success(users);
         }
         catch (Exception ex)
         {   
             _logger.LogError(ex, "Failed to fetch all users.");
-            return [];
+            return DbResult<IEnumerable<UserModel>>.Failure();
         }
     }
 
-    public async Task<UserDto?> GetByIdAsync(int userId)
+    public async Task<DbResult<UserModel?>> GetByIdAsync(int userId)
     {
         const string query = """
              SELECT
@@ -51,16 +52,17 @@ public class UserRepository : IUserRepository
         try
         {   
             _logger.LogDebug("Fetching user with id {UserId} from database.", userId);
-            return await _connection.QuerySingleOrDefaultAsync(query, new { UserId = userId });
+            UserModel? user = await _connection.QuerySingleOrDefaultAsync(query, new { UserId = userId });
+            return DbResult<UserModel?>.Success(user);
         }
         catch (Exception ex)
         {   
             _logger.LogError(ex, "Failed to fetch user with id {UserId}.", userId);
-            return null;
+            return DbResult<UserModel?>.Failure();
         }
     }
     
-    public async Task<UserDto?> GetByEmailAsync(string email)
+    public async Task<DbResult<UserModel?>> GetByEmailAsync(string email)
     {
         const string query = """
              SELECT
@@ -73,16 +75,17 @@ public class UserRepository : IUserRepository
         try
         {   
             _logger.LogDebug("Fetching user with email {Email} from database.", email);
-            return await _connection.QuerySingleOrDefaultAsync(query, new { Email = email });
+            UserModel? user = await _connection.QuerySingleOrDefaultAsync(query, new { Email = email });
+            return DbResult<UserModel?>.Success(user);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch user with email {Email}.", email);
-            return null;
+            return DbResult<UserModel?>.Failure();
         }
     }
     
-    public async Task<int?> AddAsync(UserDto userDto)
+    public async Task<DbResult<int?>> AddAsync(UserModel userModel)
     {
         const string query = """
              INSERT INTO [User](Username, Email, PasswordHash)
@@ -93,16 +96,17 @@ public class UserRepository : IUserRepository
         try
         {
             _logger.LogDebug("Creating new user from database.");
-            return await _connection.ExecuteScalarAsync<int?>(query, userDto);
+            var status = await _connection.ExecuteScalarAsync<int?>(query, userModel);
+            return DbResult<int?>.Success(status);
         }
         catch (Exception ex)
         {   
             _logger.LogError(ex, "Failed to create new user from database.");
-            return null;
+            return DbResult<int?>.Failure();
         }
     }
 
-    public async Task<bool> SoftDeleteAsync(int userId)
+    public async Task<DbResult<bool>> SoftDeleteAsync(int userId)
     {
         const string query = """
              UPDATE [User]
@@ -114,16 +118,16 @@ public class UserRepository : IUserRepository
         {   
             _logger.LogDebug("Soft-deleting user with id {UserId}.", userId);
             int rowsAffected = await _connection.ExecuteAsync(query, new { UserId = userId });
-            return rowsAffected >= 1;
+            return DbResult<bool>.Success(rowsAffected > 0);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to soft delete user with id {UserId}.", userId);
-            return false;
+            return DbResult<bool>.Failure();
         }
     }
 
-    public async Task<bool> ChangeUsernameAsync(int userId, string newUsername)
+    public async Task<DbResult<bool>> ChangeUsernameAsync(int userId, string newUsername)
     {
         const string query = """
              UPDATE [User]
@@ -139,16 +143,16 @@ public class UserRepository : IUserRepository
                 UserId = userId,
                 NewUsername = newUsername
             });
-            return rowsAffected >= 1;
+            return DbResult<bool>.Success(rowsAffected > 0);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to change username for user with id {UserId}.", userId);
-            return false;
+            return DbResult<bool>.Failure();
         }
     }
 
-    public async Task<bool> ChangeEmailAsync(int userId, string newEmail)
+    public async Task<DbResult<bool>> ChangeEmailAsync(int userId, string newEmail)
     {
         const string query = """
              UPDATE [User]
@@ -164,16 +168,16 @@ public class UserRepository : IUserRepository
                 UserId = userId,
                 NewEmail = newEmail
             });
-            return rowsAffected >= 1;
+            return DbResult<bool>.Success(rowsAffected > 0);
         }
         catch (Exception ex)
         {   
             _logger.LogError(ex, "Failed to change email for user with id {UserId}.", userId);
-            return false;
+            return DbResult<bool>.Failure();
         }
     }
 
-    public async Task<bool> ChangePasswordAsync(int userId, string newPasswordHash)
+    public async Task<DbResult<bool>> ChangePasswordAsync(int userId, string newPasswordHash)
     {
         const string query = """
              UPDATE [User]
@@ -189,12 +193,12 @@ public class UserRepository : IUserRepository
                 UserId = userId,
                 NewPasswordHash = newPasswordHash
             });
-            return rowsAffected >= 1;
+            return DbResult<bool>.Success(rowsAffected > 0);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to change password for user with id {UserId}.", userId);
-            return false;
+            return DbResult<bool>.Failure();
         }
     }
 }
