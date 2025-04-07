@@ -21,7 +21,7 @@ public class UserRepository : IUserRepository
     {
         const string query = """
             SELECT
-                UserId, Username, Email, PasswordHash,
+                UserId, Username, Email,
                 CreatedAt, UpdatedAt, DeletedAt
             FROM [User];
         """;
@@ -43,7 +43,7 @@ public class UserRepository : IUserRepository
     {
         const string query = """
              SELECT
-                 UserId, Username, Email, PasswordHash,
+                 UserId, Username, Email,
                  CreatedAt, UpdatedAt, DeletedAt
              FROM [User]
              WHERE UserId = @UserId;
@@ -52,7 +52,7 @@ public class UserRepository : IUserRepository
         try
         {   
             _logger.LogDebug("Fetching user with id {UserId} from database.", userId);
-            UserModel? user = await _connection.QuerySingleOrDefaultAsync(query, new { UserId = userId });
+            var user = await _connection.QuerySingleOrDefaultAsync<UserModel>(query, new { UserId = userId });
             return DbResult<UserModel?>.Success(user);
         }
         catch (Exception ex)
@@ -75,7 +75,7 @@ public class UserRepository : IUserRepository
         try
         {   
             _logger.LogDebug("Fetching user with email {Email} from database.", email);
-            UserModel? user = await _connection.QuerySingleOrDefaultAsync(query, new { Email = email });
+            var user = await _connection.QuerySingleOrDefaultAsync<UserModel>(query, new { Email = email });
             return DbResult<UserModel?>.Success(user);
         }
         catch (Exception ex)
