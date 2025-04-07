@@ -17,12 +17,7 @@ public class Result<T>
         StatusCode = statusCode;
     }
 
-    public static Result<T> Success(T? data = default, HttpStatusCode statusCode = HttpStatusCode.OK)
-    {
-        return Success(string.Empty, data, statusCode);
-    }
-
-    public static Result<T> Success(string message, T? data = default, HttpStatusCode statusCode = HttpStatusCode.OK)
+    public static Result<T> Success(string message, T data, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
         return new Result<T>(true, message, data, statusCode);
     }
@@ -30,10 +25,5 @@ public class Result<T>
     public static Result<T> Failure(string message, T? data = default, HttpStatusCode statusCode = HttpStatusCode.InternalServerError)
     {
         return new Result<T>(false, message, data, statusCode);
-    }
-
-    public static Result<T> Failure(Exception ex, HttpStatusCode statusCode = HttpStatusCode.InternalServerError)
-    {
-        return Failure(ex.Message, default, statusCode);
     }
 }
