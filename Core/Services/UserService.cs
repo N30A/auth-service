@@ -1,5 +1,6 @@
 using System.Net;
 using Core.Dtos.User;
+using Core.Mappers;
 using Core.Services.Interfaces;
 using Data.Repositories.Interfaces;
 
@@ -21,15 +22,14 @@ public class UserService : IUserService
         
         if (!dbResult.IsSuccess)
         {
-            return Result<MultipleUsersDto>.Failure("Unknown error", new MultipleUsersDto(data));
+            return Result<MultipleUsersDto>.Failure("Unknown error", MultipleUsersDto.Empty);
         }
         
-        if (data.Count == 0)
+        return data.Count switch
         {
-            return Result<MultipleUsersDto>.Failure("No users found", MultipleUsersDto.Empty, HttpStatusCode.NotFound);
-        }
-        
-        return Result<MultipleUsersDto>.Success("Success", new MultipleUsersDto(data));
+            0 => Result<MultipleUsersDto>.Failure("No users found", MultipleUsersDto.Empty, HttpStatusCode.NotFound),
+            _ => Result<MultipleUsersDto>.Success("Success", UserMapper.ToMultipleDto(data))
+        };
     }
 
     public async Task<Result<UserDto?>> GetByIdAsync(int userId)
@@ -41,12 +41,11 @@ public class UserService : IUserService
             return Result<UserDto?>.Failure("Unknown error");
         }
 
-        if (dbResult.Data == null)
+        return dbResult.Data switch
         {
-            return Result<UserDto?>.Failure("No user found", statusCode: HttpStatusCode.NotFound);
-        }
-
-        return Result<UserDto?>.Success("Success");
+            null => Result<UserDto?>.Failure("No user found", statusCode: HttpStatusCode.NotFound),
+            _ => Result<UserDto?>.Success("Success", UserMapper.ToDto(dbResult.Data))
+        };
     }
 
     public async Task<Result<UserDto?>> GetByEmailAsync(string email)
@@ -58,24 +57,45 @@ public class UserService : IUserService
             return Result<UserDto?>.Failure("Unknown error");
         }
 
-        if (dbResult.Data == null)
-        {
-            return Result<UserDto?>.Failure("No user found", statusCode: HttpStatusCode.NotFound);
-        }
-
-        return Result<UserDto?>.Success("Success");
+        return dbResult.Data switch
+        {   
+            null => Result<UserDto?>.Failure("No user found", statusCode: HttpStatusCode.NotFound),
+            _ => Result<UserDto?>.Success("Success", UserMapper.ToDto(dbResult.Data))
+        };
     }
-
-    public async Task<Result<int?>> AddAsync(UserDto userDto)
-    {
-        throw new NotImplementedException();
-    }
-
+    
     public async Task<Result<bool>> SoftDeleteAsync(int userId)
     {
-        throw new NotImplementedException();
-    }
+        var result = await _userRepository.SoftDeleteAsync(userId);
 
+        if (!result.IsSuccess)
+        {
+            return Result<bool>.Failure("Unknown error");
+        }
+        
+        return result.Data switch
+        {   
+            true => Result<bool>.Success(string.Empty, result.Data),
+            false => Result<bool>.Failure("No user found", statusCode: HttpStatusCode.NotFound)
+        };
+    }
+    
+    public async Task<Result<bool>> RestoreAsync(int userId)
+    {
+        var result = await _userRepository.RestoreAsync(userId);
+        
+        if (!result.IsSuccess)
+        {
+            return Result<bool>.Failure("Unknown error");
+        }
+        
+        return result.Data switch
+        {   
+            true => Result<bool>.Success(string.Empty, result.Data),
+            false => Result<bool>.Failure("No user found", statusCode: HttpStatusCode.NotFound)
+        };
+    }
+    
     public async Task<Result<bool>> ChangeUsernameAsync(int userId, string newUsername)
     {
         throw new NotImplementedException();
