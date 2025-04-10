@@ -1,4 +1,5 @@
 using System.Data;
+using Core.PasswordHasher;
 using Core.Services;
 using Core.Services.Interfaces;
 using Data.Repositories;
@@ -32,6 +33,12 @@ public static class DependencyInjection
     {
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
+        return services;
+    }
+
+    public static IServiceCollection AddDependencies(this IServiceCollection services)
+    {
+        services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
         return services;
     }
 }
