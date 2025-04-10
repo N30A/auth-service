@@ -152,6 +152,27 @@ public class UserRepository : IUserRepository
         }
     }
 
+    public async Task<DbResult<bool>> RestoreAsync(int userId)
+    {
+        const string query = """
+            UPDATE [User]
+            SET DeletedAt = null
+            WHERE UserId = @UserId AND DeletedAt IS NOT NULL;
+         """;
+        
+        try
+        {   
+            _logger.LogDebug("Restoring user with id {UserId} in database.", userId);
+            int rowsAffected = await _connection.ExecuteAsync(query, new { UserId = userId });
+            return DbResult<bool>.Success(rowsAffected > 0);
+        }
+        catch (Exception ex)
+        {   
+            _logger.LogError(ex, "Failed to restore user with id {UserId}.", userId);
+            return DbResult<bool>.Failure();
+        }
+    }
+
     public async Task<DbResult<bool>> ChangeEmailAsync(int userId, string newEmail)
     {
         const string query = """
