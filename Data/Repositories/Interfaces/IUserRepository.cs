@@ -7,7 +7,7 @@ public interface IUserRepository
     Task<DbResult<IEnumerable<UserModel>>> GetAllAsync();
     Task<DbResult<UserModel?>> GetByIdAsync(int userId);
     Task<DbResult<UserModel?>> GetByEmailAsync(string email);
-    Task<DbResult<int?>> AddAsync(UserModel userModel);
+    Task<DbResult<UserModel?>> AddAsync(AddUserModel newUser);
     Task<DbResult<bool>> SoftDeleteAsync(int userId);
     
     Task<DbResult<bool>> RestoreAsync(int userId);
