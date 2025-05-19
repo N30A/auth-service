@@ -20,7 +20,7 @@ public class UserService : IUserService
         var dbResult = await _userRepository.GetAllAsync();
         var data = dbResult.Data?.ToList() ?? [];
         
-        if (!dbResult.IsSuccess)
+        if (!dbResult.Succeeded)
         {
             return Result<MultipleUsersDto>.Failure("Unknown error", MultipleUsersDto.Empty);
         }
@@ -36,7 +36,7 @@ public class UserService : IUserService
     {
         var dbResult = await _userRepository.GetByIdAsync(userId);
         
-        if (!dbResult.IsSuccess)
+        if (!dbResult.Succeeded)
         {
             return Result<UserDto?>.Failure("Unknown error");
         }
@@ -52,7 +52,7 @@ public class UserService : IUserService
     {
         var dbResult = await _userRepository.GetByEmailAsync(email);
         
-        if (!dbResult.IsSuccess)
+        if (!dbResult.Succeeded)
         {
             return Result<UserDto?>.Failure("Unknown error");
         }
@@ -63,12 +63,24 @@ public class UserService : IUserService
             _ => Result<UserDto?>.Success("Success", UserMapper.ToDto(dbResult.Data))
         };
     }
+
+    public async Task<Result<UserDto?>> AddAsync(AddUserDto userDto)
+    {   
+        var dbResult = await _userRepository.AddAsync(UserMapper.ToModel(userDto));
+        
+        if (!dbResult.Succeeded)
+        {
+            return Result<UserDto?>.Failure("Unknown error");
+        }
+
+        return Result<UserDto?>.Success("Success", UserMapper.ToDto(dbResult.Data!));
+    }
     
     public async Task<Result<bool>> SoftDeleteAsync(int userId)
     {
         var result = await _userRepository.SoftDeleteAsync(userId);
 
-        if (!result.IsSuccess)
+        if (!result.Succeeded)
         {
             return Result<bool>.Failure("Unknown error");
         }
@@ -84,7 +96,7 @@ public class UserService : IUserService
     {
         var result = await _userRepository.RestoreAsync(userId);
         
-        if (!result.IsSuccess)
+        if (!result.Succeeded)
         {
             return Result<bool>.Failure("Unknown error");
         }

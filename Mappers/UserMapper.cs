@@ -1,7 +1,7 @@
 using Core.Dtos.User;
 using Data.Models;
 
-namespace Core.Mappers;
+namespace Mappers;
 
 public static class UserMapper
 {
@@ -23,6 +23,13 @@ public static class UserMapper
         CreatedAt = user.CreatedAt,
         UpdatedAt = user.UpdatedAt,
         DeletedAt = user.DeletedAt
+    };
+    
+    public static AddUserModel ToModel(AddUserDto user) => new()
+    {
+        Username = user.Username,
+        Email = user.Email,
+        PasswordHash = user.PasswordHash
     };
 
     public static MultipleUsersDto ToMultipleDto(IEnumerable<UserModel> users) => new()

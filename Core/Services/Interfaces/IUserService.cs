@@ -7,6 +7,7 @@ public interface IUserService
     public Task<Result<MultipleUsersDto>> GetAllAsync();
     Task<Result<UserDto?>> GetByIdAsync(int userId);
     Task<Result<UserDto?>> GetByEmailAsync(string email);
+    Task<Result<UserDto?>> AddAsync(AddUserDto userDto);
     Task<Result<bool>> SoftDeleteAsync(int userId);
     
     Task<Result<bool>> RestoreAsync(int userId);

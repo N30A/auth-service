@@ -1,4 +1,6 @@
 using Core.Dtos.Auth;
+using Core.Dtos.User;
+using Core.Services.Interfaces;
 
 namespace Api.Endpoints;
 
@@ -13,9 +15,22 @@ public static class AuthEndpoints
         builder.MapGet("/auth/validate", Validate);
     }
 
-    private static IResult Register(RegisterDto body)
+    private static async Task<IResult> Register(RegisterDto body, IAuthService authService)
     {
-        return Results.Ok();
+        var result = await authService.RegisterAsync(body);
+        var response = new ApiResponse<UserDto>
+        {   
+            Data = result.Data,
+            Message = result.Message,
+            StatusCode = result.StatusCode
+        };
+        
+        if (!result.IsSuccess)
+        {
+            Results.InternalServerError(response);
+        }
+
+        return Results.Created($"/users/{response.Data?.Id}", response);
     }
     
     private static IResult Login()
