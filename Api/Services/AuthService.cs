@@ -18,20 +18,39 @@ public class AuthService : IAuthService
     }
 
     public async Task<Result<UserResponseDto?>> RegisterAsync(RegisterUserDto registerDto)
-    {
-        var newUser = UserMapper.ToModel(registerDto);
+    {   
+        registerDto.Email = registerDto.Email.ToLower().Trim();
+        registerDto.Username = registerDto.Username.Trim();
         
-        var existsResult = await _userService.GetByEmailAsync(newUser.Email);
-        if (existsResult.Succeeded)
-        {   
-            if (existsResult.Data!.Username == newUser.Username)
-            {
-                return Result<UserResponseDto?>.Failure("Username already used", null, HttpStatusCode.Conflict);
-            }
-            
-            return Result<UserResponseDto?>.Failure("Email already used", null, HttpStatusCode.Conflict);
+        var conflicts = new List<string>();
+        
+        var emailResult = await _userService.GetByEmailAsync(registerDto.Email);
+        if (emailResult.Succeeded)
+        {
+            conflicts.Add("email");
+        }
+        else if (emailResult.StatusCode != HttpStatusCode.NotFound)
+        {
+            return Result<UserResponseDto?>.Failure(emailResult.Message, null, emailResult.StatusCode);
         }
         
+        var usernameResult = await _userService.GetByUsernameAsync(registerDto.Username);
+        if (usernameResult.Succeeded)
+        {
+            conflicts.Add("username");
+        }
+        else if (usernameResult.StatusCode != HttpStatusCode.NotFound)
+        {
+            return Result<UserResponseDto?>.Failure(usernameResult.Message, null, usernameResult.StatusCode);
+        }
+
+        if (conflicts.Count > 0)
+        {
+            string message = string.Join(" ", conflicts);
+            return Result<UserResponseDto?>.Failure(message, null, HttpStatusCode.Conflict);
+        }
+        
+        var newUser = UserMapper.ToModel(registerDto);
         newUser.PasswordHash = _passwordHasher.HashPassword(registerDto.Password);
         
         var result = await _userService.AddAsync(newUser);

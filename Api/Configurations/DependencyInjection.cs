@@ -50,6 +50,7 @@ public static class DependencyInjection
     public static IServiceCollection AddValidators(this IServiceCollection services)
     {
         services.AddScoped<IValidator<UpdateUserDto>, UpdateUserValidator>();
+        services.AddScoped<IValidator<RegisterUserDto>, RegisterUserValidator>();
         return services;
     }
 }
