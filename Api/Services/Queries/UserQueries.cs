@@ -17,10 +17,17 @@ public static class UserQueries
     
     public const string GetByEmail = """
         SELECT
-            UserId, Username, Email, PasswordHash, CreatedAt, UpdatedAt, DeletedAt
+            UserId, Username, Email, CreatedAt, UpdatedAt, DeletedAt
         FROM Users
         WHERE Email = @Email;
     """;
+    
+    public const string GetByUsername = """
+        SELECT
+            UserId, Username, Email, CreatedAt, UpdatedAt, DeletedAt
+        FROM Users
+        WHERE Username = @Username;
+     """;
     
     public const string Add = """
         INSERT INTO Users(UserId, Username, Email, PasswordHash)
