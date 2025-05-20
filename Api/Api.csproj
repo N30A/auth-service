@@ -7,13 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Dapper" Version="2.1.66" />
+        <PackageReference Include="Isopoh.Cryptography.Argon2" Version="2.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
         <PackageReference Include="Scalar.AspNetCore" Version="2.1.3" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Core\Core.csproj" />
-      <ProjectReference Include="..\Data\Data.csproj" />
+      <Folder Include="Validators\" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 using System.Net;
-using Core.Dtos.User;
-using Core.Services.Interfaces;
+using Api.Dtos;
+using Api.Mappers;
+using Api.Services.Interfaces;
 
 namespace Api.Endpoints;
 
@@ -9,26 +10,21 @@ public static class UsersEndpoints
     public static void MapUsersEndpoints(this IEndpointRouteBuilder builder)
     {
         builder.MapGet("/users", GetAll);
-        builder.MapGet("/users/{userId:int}", GetById);
+        builder.MapGet("/users/{userId:guid}", GetById);
         builder.MapGet("/users/{email}", GetByEmail);
-        builder.MapDelete("/users/{userId:int}", Delete);
-        builder.MapPost("/users/{userId:int}/restore", Restore);
-        builder.MapPatch("/users/{userId:int}/username", ChangeUsername);
-        builder.MapPatch("/users/{userId:int}/email", ChangeEmail);
-        builder.MapPatch("/users/{userId:int}/password", ChangePassword);
+        builder.MapDelete("/users/{userId:guid}", Delete);
+        builder.MapPost("/users/{userId:guid}/restore", Restore);
     }
 
     private static async Task<IResult> GetAll(IUserService userService)
     {   
         var result = await userService.GetAllAsync();
-        var response = new ApiResponse<MultipleUsersDto>
+        var response = new ApiResponse<MultipleUsersResponseDto>
         {
-            Data = result.Data,
             Message = result.Message,
-            StatusCode = result.StatusCode
         };
         
-        if (!result.IsSuccess)
+        if (!result.Succeeded)
         {
             return result.StatusCode switch
             {
@@ -36,20 +32,20 @@ public static class UsersEndpoints
                 _ => Results.InternalServerError(response)
             };
         }
+        
+        response.Data = UserMapper.ToDto(result.Data!);
         return Results.Ok(response);
     }
     
-    private static async Task<IResult> GetById(int userId, IUserService userService)
+    private static async Task<IResult> GetById(Guid userId, IUserService userService)
     {
         var result = await userService.GetByIdAsync(userId);
-        var response = new ApiResponse<UserDto>
+        var response = new ApiResponse<UserResponseDto>
         {
-            Data = result.Data,
             Message = result.Message,
-            StatusCode = result.StatusCode
         };
 
-        if (!result.IsSuccess)
+        if (!result.Succeeded)
         {
             return result.StatusCode switch
             {
@@ -57,20 +53,20 @@ public static class UsersEndpoints
                 _ => Results.InternalServerError(response)
             };
         }
+        
+        response.Data = UserMapper.ToDto(result.Data!);
         return Results.Ok(response);
     }
     
     private static async Task<IResult> GetByEmail(string email, IUserService userService)
     {
         var result = await userService.GetByEmailAsync(email);
-        var response = new ApiResponse<UserDto>
+        var response = new ApiResponse<UserResponseDto>
         {
-            Data = result.Data,
             Message = result.Message,
-            StatusCode = result.StatusCode
         };
 
-        if (!result.IsSuccess)
+        if (!result.Succeeded)
         {
             return result.StatusCode switch
             {
@@ -78,19 +74,21 @@ public static class UsersEndpoints
                 _ => Results.InternalServerError(response)
             };
         }
+        
+        response.Data = UserMapper.ToDto(result.Data!);
         return Results.Ok(response);
     }
     
-    private static async Task<IResult> Delete(int userId, IUserService userService)
+    private static async Task<IResult> Delete(Guid userId, IUserService userService)
     {
         var result = await userService.SoftDeleteAsync(userId);
-        var response = new ApiNoDataResponse
-        {
-            Message = result.Message,
-            StatusCode = result.StatusCode
+        var response = new ApiResponse<bool?>
+        {   
+            Data = null,
+            Message = result.Message
         };
         
-        if (!result.IsSuccess)
+        if (!result.Succeeded)
         {
             return result.StatusCode switch
             {
@@ -101,16 +99,16 @@ public static class UsersEndpoints
         return Results.NoContent();
     }
     
-    private static async Task<IResult> Restore(int userId, IUserService userService)
+    private static async Task<IResult> Restore(Guid userId, IUserService userService)
     {
         var result = await userService.RestoreAsync(userId);
-        var response = new ApiNoDataResponse
-        {
-            Message = result.Message,
-            StatusCode = result.StatusCode
+        var response = new ApiResponse<bool?>
+        {   
+            Data = null,
+            Message = result.Message
         };
         
-        if (!result.IsSuccess)
+        if (!result.Succeeded)
         {
             return result.StatusCode switch
             {
@@ -119,20 +117,5 @@ public static class UsersEndpoints
             };
         }
         return Results.NoContent();
-    }
-
-    private static IResult ChangeUsername(int userId, ChangeUsernameDto body)
-    {
-        return Results.Ok();
-    }
-    
-    private static IResult ChangeEmail(int userId, ChangeEmailDto body)
-    {
-        return Results.Ok();
-    }
-    
-    private static IResult ChangePassword(int userId, ChangePasswordDto body)
-    {
-        return Results.Ok();
     }
 }

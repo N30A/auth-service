@@ -1,4 +1,4 @@
-using Core.Dtos.Auth;
+using Api.Dtos;
 
 namespace Api.Endpoints;
 
@@ -13,7 +13,7 @@ public static class AuthEndpoints
         builder.MapGet("/auth/validate", Validate);
     }
 
-    private static IResult Register(RegisterDto body)
+    private static IResult Register(RegisterUserDto body)
     {
         return Results.Ok();
     }

@@ -1,0 +1,22 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: always
+    volumes:
+      - mssql-data:/var/opt/mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Express
+    ports:
+      - 1433:1433
+  mssql.init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    restart: no
+    volumes:
+      - ./initdb:/initdb
+    depends_on:
+      - mssql
+    command: "/opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P '${DB_PASSWORD}' -d master -i /initdb/init.sql"
+volumes:
+  mssql-data:
