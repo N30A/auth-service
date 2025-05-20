@@ -41,11 +41,29 @@ public static class UserQueries
     """;
 
     public const string Update = """
+        DECLARE @UpdatedUsers TABLE (
+            UserId UNIQUEIDENTIFIER,
+            Username VARCHAR(20),
+            Email VARCHAR(254),
+            CreatedAt DATETIME2,
+            UpdatedAt DATETIME2,
+            DeletedAt DATETIME2
+        );
+
         UPDATE Users
-        SET 
+        SET
             Username = COALESCE(@Username, Username),
             Email = COALESCE(@Email, Email)
+        OUTPUT
+            INSERTED.UserId,
+            INSERTED.Username,
+            INSERTED.Email,
+            INSERTED.CreatedAt,
+            INSERTED.UpdatedAt,
+            INSERTED.DeletedAt
+            INTO @UpdatedUsers
         WHERE UserId = @UserId;
-                              
+        
+        SELECT * FROM @UpdatedUsers;
      """;
 }

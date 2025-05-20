@@ -11,6 +11,13 @@ public static class UserMapper
         Email = registerUserDto.Email,
     };
 
+    public static UpdateUserModel ToModel(UpdateUserDto updateUserDto, Guid userId) => new()
+    {   
+        UserId = userId,
+        Username = updateUserDto.Username,
+        Email = updateUserDto.Email
+    };
+    
     public static UserResponseDto ToDto(UserModel userModel) => new()
     {
         Id = userModel.UserId,

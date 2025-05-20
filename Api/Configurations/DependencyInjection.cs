@@ -1,7 +1,10 @@
 using System.Data;
+using Api.Dtos;
 using Api.PasswordHashers;
 using Api.Services;
 using Api.Services.Interfaces;
+using Api.Validators;
+using FluentValidation;
 using Microsoft.Data.SqlClient;
 
 namespace Api.Configurations;
@@ -41,6 +44,12 @@ public static class DependencyInjection
     public static IServiceCollection AddDependencies(this IServiceCollection services)
     {
         services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
+        return services;
+    }
+    
+    public static IServiceCollection AddValidators(this IServiceCollection services)
+    {
+        services.AddScoped<IValidator<UpdateUserDto>, UpdateUserValidator>();
         return services;
     }
 }

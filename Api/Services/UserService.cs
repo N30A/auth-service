@@ -120,7 +120,11 @@ public class UserService : IUserService
     {
         try
         {
-            var user = await _connection.QuerySingleAsync<UserModel>(UserQueries.Update, userToUpdate);
+            var user = await _connection.QuerySingleAsync<UserModel?>(UserQueries.Update, userToUpdate);
+            if (user == null)
+            {
+                return Result<UserModel?>.NotFound("User not found");
+            }
             return Result<UserModel?>.Success("User updated successfully", user);
         }
         catch (SqlException ex) when (ex.Number is 2601 or 2627)

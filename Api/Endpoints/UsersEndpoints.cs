@@ -2,6 +2,8 @@ using System.Net;
 using Api.Dtos;
 using Api.Mappers;
 using Api.Services.Interfaces;
+using Api.Validators;
+using FluentValidation;
 
 namespace Api.Endpoints;
 
@@ -14,6 +16,7 @@ public static class UsersEndpoints
         builder.MapGet("/users/{email}", GetByEmail);
         builder.MapDelete("/users/{userId:guid}", Delete);
         builder.MapPost("/users/{userId:guid}/restore", Restore);
+        builder.MapPut("/users/{userId:guid}", Update);
     }
 
     private static async Task<IResult> GetAll(IUserService userService)
@@ -117,5 +120,47 @@ public static class UsersEndpoints
             };
         }
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> Update(
+        Guid userId,
+        UpdateUserDto dto,
+        IUserService userService,
+        IValidator<UpdateUserDto> validator
+    )
+    {
+        ApiResponse<UserResponseDto?> response;
+ 
+        var validationResult = await validator.ValidateAsync(dto);
+        if (!validationResult.IsValid)
+        {
+            response = new ApiResponse<UserResponseDto?>
+            {
+                Data = null,
+                Message = "Validation failed",
+                Errors = validationResult.ToValidationErrorDtos()
+            };
+           return Results.BadRequest(response);
+        }
+        
+        var result = await userService.UpdateAsync(userId, UserMapper.ToModel(dto, userId));
+        response = new ApiResponse<UserResponseDto?>
+        {   
+            Data = null,
+            Message = result.Message,
+            Errors = null
+        };
+        if (!result.Succeeded)
+        {
+            return result.StatusCode switch
+            {
+                HttpStatusCode.NotFound => Results.NotFound(response),
+                HttpStatusCode.Conflict => Results.Conflict(response),
+                _ => Results.InternalServerError(response)
+            };
+        }
+        
+        response.Data = UserMapper.ToDto(result.Data!);
+        return Results.Ok(response);
     }
 }

@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddDependencies();
+builder.Services.AddValidators();
 builder.Services.AddServices();
 
 var app = builder.Build();
