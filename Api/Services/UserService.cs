@@ -63,6 +63,26 @@ public class UserService : IUserService
             return Result<UserModel?>.Failure();
         }
     }
+
+    public async Task<Result<UserModel?>> GetByUsernameAsync(string username)
+    {
+        try
+        {   
+            var user = await _connection.QuerySingleOrDefaultAsync<UserModel>(
+                UserQueries.GetByUsername, 
+                new { Username = username }
+            );
+            if (user == null)
+            {
+                return Result<UserModel?>.NotFound("User not found");
+            }
+            return Result<UserModel?>.Success("User retrieved successfully", user);
+        }
+        catch (Exception)
+        {
+            return Result<UserModel?>.Failure();
+        }
+    }
     
     public async Task<Result<UserModel?>> AddAsync(AddUserModel newUser)
     {   
