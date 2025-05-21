@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text;
 using Api.Dtos;
 using Api.PasswordHashers;
 using Api.Services;
@@ -6,6 +7,7 @@ using Api.Services.Interfaces;
 using Api.Validators;
 using FluentValidation;
 using Microsoft.Data.SqlClient;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Configurations;
 
@@ -51,6 +53,40 @@ public static class DependencyInjection
     {
         services.AddScoped<IValidator<UpdateUserDto>, UpdateUserValidator>();
         services.AddScoped<IValidator<RegisterUserDto>, RegisterUserValidator>();
+        services.AddScoped<IValidator<LoginUserDto>, LoginUserValidator>();
         return services;
+    }
+
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {   
+        string jwtKey = GetEnvironmentVariableOrThrow(configuration, "JWT_KEY");
+        string jwtIssuer = GetEnvironmentVariableOrThrow(configuration, "JWT_ISSUER");
+        string jwtAudience = GetEnvironmentVariableOrThrow(configuration, "JWT_AUDIENCE");
+        
+        services.AddAuthentication("Bearer").AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtIssuer,
+                ValidAudiences = jwtAudience.Split(",").Select(j => j.Trim()).ToArray(),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+        return services;
+    }
+    
+    private static string GetEnvironmentVariableOrThrow(IConfiguration configuration, string key)
+    {
+        var value = configuration.GetValue<string>(key);
+        if (string.IsNullOrWhiteSpace(value))
+        {   
+            throw new InvalidOperationException($"Environment variable '{key}' is required but was either empty or not found.");
+        }
+        return value;
     }
 }

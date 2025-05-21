@@ -43,13 +43,29 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'RefreshTokens')
     BEGIN
         CREATE TABLE RefreshTokens (
-           RefreshTokenId INT IDENTITY PRIMARY KEY,
-           Token VARCHAR(2048) NOT NULL,
-           UserId UNIQUEIDENTIFIER REFERENCES Users(UserId),
-           IssuedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-           ExpiresAt DATETIME2 NOT NULL
+            RefreshTokenId INT IDENTITY PRIMARY KEY,
+            TokenHash VARCHAR(255) NOT NULL,
+            UserId UNIQUEIDENTIFIER NOT NULL REFERENCES Users(UserId),
+            IssuedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            ExpiresAt DATETIME2 NOT NULL,
+            RevokedAt DATETIME2 NULL,
+            UserAgent NVARCHAR(255) NULL,
+            IpAddress NVARCHAR(39) NULL,
+            IsUsed BIT NOT NULL DEFAULT 0
         );
     END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'Index_RefreshTokens_UserId')
+    BEGIN
+        CREATE INDEX Index_RefreshTokens_UserId ON RefreshTokens(UserId);
+    END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'Index_RefreshTokens_Token')
+    BEGIN
+        CREATE INDEX Index_RefreshTokens_Token ON RefreshTokens(TokenHash);
+    END
 GO
 
 IF NOT EXISTS (

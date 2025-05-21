@@ -1,5 +1,6 @@
 using System.Net;
 using Api.Dtos;
+using Api.Mappers;
 using Api.Services.Interfaces;
 using Api.Validators;
 using FluentValidation;
@@ -64,9 +65,70 @@ public static class AuthEndpoints
         return Results.Ok(response);
     }
     
-    private static IResult Login()
+    private static async Task<IResult> Login(
+        LoginUserDto dto, 
+        HttpContext context, 
+        IAuthService authService, 
+        IValidator<LoginUserDto> validator
+    )
     {
-        return Results.Ok();
+        ApiResponse<AuthResponseDto?> response;
+        
+        var validationResult = await validator.ValidateAsync(dto);
+        if (!validationResult.IsValid)
+        {
+            response = new ApiResponse<AuthResponseDto?>
+            {
+                Data = null,
+                Message = "Validation failed",
+                Errors = validationResult.ToValidationErrorDtos()
+            };
+            return Results.BadRequest(response);
+        }
+
+        var clientId = context.Request.Headers["X-Client-Id"].ToString();
+        if (string.IsNullOrWhiteSpace(clientId))
+        {   
+            response = new ApiResponse<AuthResponseDto?>
+            {
+                Data = null,
+                Message = "X-Client-Id is required",
+                Errors = null
+            };
+            return Results.BadRequest(response);
+        }
+        
+        var result = await authService.LoginAsync(dto, new LoginContextDto
+        {   
+            ClientId = clientId,
+            IpAddress = context.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = context.Request.Headers.UserAgent.ToString()
+        });
+        response = new ApiResponse<AuthResponseDto?>
+        {   
+            Data = null,
+            Message = result.Message,
+            Errors = null
+        };
+        if (!result.Succeeded)
+        {
+            return result.StatusCode switch
+            {
+                HttpStatusCode.BadRequest => Results.BadRequest(response),
+                HttpStatusCode.Unauthorized => Results.Unauthorized(),
+                _ => Results.InternalServerError(response)
+            };
+        }
+        
+        response.Data = AuthMapper.ToDto(result.Data!);
+        context.Response.Cookies.Append("refreshToken", result.Data!.RefreshToken.Token, new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = result.Data!.RefreshToken.ExpiresAt,
+            SameSite = SameSiteMode.Strict,
+            Secure = true
+        });
+        return Results.Ok(response);
     }
     
     private static IResult Logout()

@@ -10,21 +10,21 @@ public static class UserQueries
     
     public const string GetById = """
         SELECT
-            UserId, Username, Email, CreatedAt, UpdatedAt, DeletedAt
+            UserId, Username, Email, PasswordHash, CreatedAt, UpdatedAt, DeletedAt
         FROM Users
         WHERE UserId = @UserId;
     """;
     
     public const string GetByEmail = """
         SELECT
-            UserId, Username, Email, CreatedAt, UpdatedAt, DeletedAt
+            UserId, Username, Email, PasswordHash, CreatedAt, UpdatedAt, DeletedAt
         FROM Users
         WHERE Email = @Email;
     """;
     
     public const string GetByUsername = """
         SELECT
-            UserId, Username, Email, CreatedAt, UpdatedAt, DeletedAt
+            UserId, Username, Email, PasswordHash, CreatedAt, UpdatedAt, DeletedAt
         FROM Users
         WHERE Username = @Username;
      """;

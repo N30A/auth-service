@@ -25,7 +25,6 @@ public class RegisterUserValidator : AbstractValidator<RegisterUserDto>
                 .Must(ContainsDigit).WithMessage("Password must contain at least one digit.")
                 .Must(ContainsSpecialCharacter).WithMessage("Password must contain at least one special character.");
         });
-
     }
 
     private static bool ContainsUppercase(string password) =>
