@@ -193,7 +193,7 @@ public class AuthService : IAuthService
         });
     }
 
-    public Result<string?> Validate(string accessToken, IConfiguration configuration)
+    public Result<string?> Validate(string accessToken, string clientId, IConfiguration configuration)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         byte[] jwtKey = Encoding.UTF8.GetBytes(configuration.GetValue<string>("JWT_KEY")!);
@@ -210,6 +210,7 @@ public class AuthService : IAuthService
                 ValidIssuer = jwtIssuer,
                 ValidateAudience = true,
                 ValidateLifetime = true,
+                ValidAudience = clientId,
                 ValidAudiences = allowedAudiences,
                 IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
                 ValidateIssuerSigningKey = true,

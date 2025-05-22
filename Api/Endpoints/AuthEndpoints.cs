@@ -200,7 +200,18 @@ public static class AuthEndpoints
     }
     
     private static IResult Validate(HttpContext context, IConfiguration configuration, IAuthService authService)
-    {
+    {   
+        var clientId = context.Request.Headers["X-Client-Id"].ToString();
+        if (string.IsNullOrWhiteSpace(clientId))
+        {   
+            return Results.BadRequest(new ApiResponse<string?>
+            {
+                Message = "X-Client-Id header is required",
+                Data = null,
+                Errors = null
+            });
+        }
+        
         if (string.IsNullOrWhiteSpace(context.Request.Headers.Authorization))
         {
             return Results.BadRequest(new ApiResponse<string?>
@@ -212,7 +223,7 @@ public static class AuthEndpoints
         }
         
         string token = context.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-        var result = authService.Validate(token, configuration);
+        var result = authService.Validate(token, clientId, configuration);
 
         return result.Succeeded
             ? Results.Ok(new ApiResponse<string?>
