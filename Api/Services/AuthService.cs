@@ -193,6 +193,40 @@ public class AuthService : IAuthService
         });
     }
 
+    public Result<string?> Validate(string accessToken, IConfiguration configuration)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        byte[] jwtKey = Encoding.UTF8.GetBytes(configuration.GetValue<string>("JWT_KEY")!);
+        var jwtIssuer = configuration.GetValue<string>("JWT_ISSUER")!;
+        string[] allowedAudiences = _configuration
+            .GetValue<string>("JWT_AUDIENCE")!
+            .Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        try
+        {
+            var principal = tokenHandler.ValidateToken(accessToken, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwtIssuer,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidAudiences = allowedAudiences,
+                IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
+                ValidateIssuerSigningKey = true,
+                ClockSkew = TimeSpan.Zero
+            }, out _);
+
+            string? userId = principal.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                         ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return Result<string?>.Success("Token validation successful", userId);
+        }
+        catch
+        {
+            return Result<string?>.Failure("Token validation failed", null, HttpStatusCode.Unauthorized);
+        }
+    }
+    
     private async Task<Result<bool>> RevokeTokenAsync(string refreshTokenId)
     {
         try

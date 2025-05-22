@@ -4,6 +4,8 @@ using Api.Mappers;
 using Api.Services.Interfaces;
 using Api.Validators;
 using FluentValidation;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.VisualBasic;
 
 namespace Api.Endpoints;
 
@@ -197,9 +199,29 @@ public static class AuthEndpoints
         return Results.Ok(response);
     }
     
-    private static IResult Validate()
+    private static IResult Validate(HttpContext context, IConfiguration configuration, IAuthService authService)
     {
-        return Results.Ok();
+        if (string.IsNullOrWhiteSpace(context.Request.Headers.Authorization))
+        {
+            return Results.BadRequest(new ApiResponse<string?>
+            {
+                Message = "Authorization header is required",
+                Data = null,
+                Errors = null
+            });
+        }
+        
+        string token = context.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+        var result = authService.Validate(token, configuration);
+
+        return result.Succeeded
+            ? Results.Ok(new ApiResponse<string?>
+            {   
+                Message = result.Message,
+                Data = result.Data,
+                Errors = null
+            })
+            : Results.Unauthorized();
     }
     
     private static List<ValidationErrorDto> ParseConflictMessage(string message)

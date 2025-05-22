@@ -9,5 +9,6 @@ public interface IAuthService
     Task<Result<AuthResultModel?>> LoginAsync(LoginUserDto loginDto, AuthContextDto context);
     Task<Result<bool>> LogoutAsync(string refreshToken);
     Task<Result<AuthResultModel?>> RefreshAsync(string refreshToken, AuthContextDto context);
+    Result<string?> Validate(string accessToken, IConfiguration configuration);
     Task<Result<bool>> ChangePasswordAsync(Guid userId, ChangeUserPasswordDto changePasswordDto);
 }
