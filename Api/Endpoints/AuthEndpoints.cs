@@ -98,7 +98,7 @@ public static class AuthEndpoints
             return Results.BadRequest(response);
         }
         
-        var result = await authService.LoginAsync(dto, new LoginContextDto
+        var result = await authService.LoginAsync(dto, new AuthContextDto
         {   
             ClientId = clientId,
             IpAddress = context.Connection.RemoteIpAddress?.ToString(),
@@ -153,9 +153,48 @@ public static class AuthEndpoints
         return Results.NoContent();
     }
     
-    private static IResult Refresh()
+    private static async Task<IResult> Refresh(HttpContext context, IAuthService authService)
     {
-        return Results.Ok();
+        var clientId = context.Request.Headers["X-Client-Id"].ToString();
+        if (string.IsNullOrWhiteSpace(clientId))
+        {   
+            return Results.BadRequest(new ApiResponse<AuthResponseDto?>
+            {
+                Data = null,
+                Message = "X-Client-Id is required",
+                Errors = null
+            });
+        }
+        
+        string? refreshToken = context.Request.Cookies["refreshToken"];
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return Results.Unauthorized();
+        }
+        
+        var result = await authService.RefreshAsync(refreshToken, new AuthContextDto
+        {   
+            ClientId = clientId,
+            IpAddress = context.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = context.Request.Headers.UserAgent.ToString()
+        });
+        var response = new ApiResponse<AuthResponseDto?>
+        {
+            Data = null,
+            Message = result.Message,
+            Errors = null
+        };
+        if (!result.Succeeded)
+        {
+            return result.StatusCode switch
+            {   
+                HttpStatusCode.BadRequest => Results.BadRequest(response),
+                HttpStatusCode.Unauthorized => Results.Unauthorized(),
+                _ => Results.InternalServerError(response)
+            };
+        }
+        response.Data = AuthMapper.ToDto(result.Data!);
+        return Results.Ok(response);
     }
     
     private static IResult Validate()

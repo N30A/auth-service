@@ -75,7 +75,7 @@ public class AuthService : IAuthService
         return Result<UserResponseDto?>.Success("User registered successfully", UserMapper.ToDto(result.Data!));
     }
 
-    public async Task<Result<AuthResultModel?>> LoginAsync(LoginUserDto loginDto, LoginContextDto context)
+    public async Task<Result<AuthResultModel?>> LoginAsync(LoginUserDto loginDto, AuthContextDto context)
     {
         var userResult = await ValidateUserAsync(loginDto.Email, loginDto.Password);
         if (!userResult.Succeeded)
@@ -131,20 +131,83 @@ public class AuthService : IAuthService
             );
         }
         
+        var revokeResult = await RevokeTokenAsync(dbToken.RefreshTokenId);
+        if (!revokeResult.Succeeded)
+        {
+            return Result<bool>.Failure();
+        }
+        return Result<bool>.Success(revokeResult.Message, true);
+    }
+
+    public async Task<Result<AuthResultModel?>> RefreshAsync(string refreshToken, AuthContextDto context)
+    {
+        var dbToken = await GetRefreshTokenByHash(HashToken(refreshToken));
+        if (dbToken == null)
+        {
+            return Result<AuthResultModel?>.Failure(
+                "Refresh token not found",
+                null,
+                HttpStatusCode.Unauthorized
+            );
+        }
+        
+        if (dbToken.RevokedAt != null || dbToken.ExpiresAt < DateTime.UtcNow || dbToken.IsUsed)
+        {
+            return Result<AuthResultModel?>.Failure(
+                "Refresh token is no longer valid", 
+                null, 
+                HttpStatusCode.Unauthorized
+            );
+        }
+
+        string? accessToken = GenerateAccessToken(dbToken.UserId, context.ClientId);
+        if (accessToken == null)
+        {
+            return Result<AuthResultModel?>.Failure(
+                "Invalid clientId/audience", 
+                null, 
+                HttpStatusCode.BadRequest
+            );
+        }
+
+        var revokeResult = await RevokeTokenAsync(dbToken.RefreshTokenId);
+        if (!revokeResult.Succeeded)
+        {
+            return Result<AuthResultModel?>.Failure();
+        }
+        
+        var newRefreshToken = GenerateRefreshToken(dbToken.UserId, context);
+        try
+        {
+            await _connection.ExecuteAsync(RefreshTokenQueries.Add, newRefreshToken);
+        }
+        catch (Exception)
+        {
+            return Result<AuthResultModel?>.Failure();
+        }
+        
+        return Result<AuthResultModel?>.Success("Token refresh successful", new AuthResultModel
+        {
+            AccessToken = accessToken,
+            RefreshToken = newRefreshToken
+        });
+    }
+
+    private async Task<Result<bool>> RevokeTokenAsync(string refreshTokenId)
+    {
         try
         {
             await _connection.ExecuteAsync(
-                RefreshTokenQueries.SetRevoked, 
-                new { dbToken.RefreshTokenId}
+                RefreshTokenQueries.SetRevoked, new { RefreshTokenId = refreshTokenId}
             );
-            return Result<bool>.Success("Refresh token successfully revoked", true);
         }
         catch (Exception)
         {
             return Result<bool>.Failure();
         }
+        return Result<bool>.Success("Refresh token successfully revoked", true);
     }
-
+    
     private async Task<RefreshTokenModel?> GetRefreshTokenByHash(string tokenHash)
     {
         try
@@ -225,7 +288,7 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
     
-    private static RefreshTokenModel GenerateRefreshToken(Guid userId, LoginContextDto context)
+    private static RefreshTokenModel GenerateRefreshToken(Guid userId, AuthContextDto context)
     {
         var randomBytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();

@@ -6,7 +6,8 @@ namespace Api.Services.Interfaces;
 public interface IAuthService
 {
     Task<Result<UserResponseDto?>> RegisterAsync(RegisterUserDto registerDto);
-    Task<Result<AuthResultModel?>> LoginAsync(LoginUserDto loginDto, LoginContextDto context);
+    Task<Result<AuthResultModel?>> LoginAsync(LoginUserDto loginDto, AuthContextDto context);
     Task<Result<bool>> LogoutAsync(string refreshToken);
+    Task<Result<AuthResultModel?>> RefreshAsync(string refreshToken, AuthContextDto context);
     Task<Result<bool>> ChangePasswordAsync(Guid userId, ChangeUserPasswordDto changePasswordDto);
 }

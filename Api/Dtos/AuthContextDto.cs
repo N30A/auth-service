@@ -1,6 +1,6 @@
 namespace Api.Dtos;
 
-public class LoginContextDto
+public class AuthContextDto
 {
     public string ClientId { get; set; }
     public string? UserAgent { get; set; }
