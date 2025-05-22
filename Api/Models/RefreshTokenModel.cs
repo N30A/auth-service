@@ -2,6 +2,7 @@ namespace Api.Models;
 
 public class RefreshTokenModel
 {   
+    public string RefreshTokenId { get; set; }
     public string Token { get; set; }
     public string TokenHash { get; set; }
     public Guid UserId { get; set; }

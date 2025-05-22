@@ -110,6 +110,56 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<Result<bool>> LogoutAsync(string refreshToken)
+    {
+        var dbToken = await GetRefreshTokenByHash(HashToken(refreshToken));
+        if (dbToken == null)
+        {
+            return Result<bool>.Failure(
+                "Refresh token not found",
+                false,
+                HttpStatusCode.Unauthorized
+            );
+        }
+        
+        if (dbToken.RevokedAt != null || dbToken.ExpiresAt < DateTime.UtcNow)
+        {
+            return Result<bool>.Failure(
+                "Refresh token is no longer valid", 
+                false, 
+                HttpStatusCode.Unauthorized
+            );
+        }
+        
+        try
+        {
+            await _connection.ExecuteAsync(
+                RefreshTokenQueries.SetRevoked, 
+                new { dbToken.RefreshTokenId}
+            );
+            return Result<bool>.Success("Refresh token successfully revoked", true);
+        }
+        catch (Exception)
+        {
+            return Result<bool>.Failure();
+        }
+    }
+
+    private async Task<RefreshTokenModel?> GetRefreshTokenByHash(string tokenHash)
+    {
+        try
+        {
+            var dbToken = await _connection.QuerySingleOrDefaultAsync<RefreshTokenModel?>(
+                RefreshTokenQueries.GetByHash, new { TokenHash = tokenHash }
+            );
+            return dbToken ?? null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+    
     public async Task<Result<UserModel?>> ValidateUserAsync(string email, string password)
     {
         var userResult = await _userService.GetByEmailAsync(email);

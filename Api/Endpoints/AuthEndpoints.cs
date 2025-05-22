@@ -131,9 +131,26 @@ public static class AuthEndpoints
         return Results.Ok(response);
     }
     
-    private static IResult Logout()
+    private static async Task<IResult> Logout(HttpContext context, IAuthService authService)
     {
-        return Results.Ok();
+        string? refreshToken = context.Request.Cookies["refreshToken"];
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return Results.Unauthorized();
+        }
+        
+        var result = await authService.LogoutAsync(refreshToken);
+        if (!result.Succeeded)
+        {
+            return result.StatusCode switch
+            {
+                HttpStatusCode.Unauthorized => Results.Unauthorized(),
+                _ => Results.InternalServerError(result)
+            };
+        }
+        
+        context.Response.Cookies.Delete("refreshToken");
+        return Results.NoContent();
     }
     
     private static IResult Refresh()
