@@ -122,7 +122,7 @@ public class AuthService : IAuthService
             );
         }
         
-        if (dbToken.RevokedAt != null || dbToken.ExpiresAt < DateTime.UtcNow)
+        if (dbToken.RevokedAt != null || dbToken.ExpiresAt < DateTime.UtcNow || dbToken.IsUsed)
         {
             return Result<bool>.Failure(
                 "Refresh token is no longer valid", 
